@@ -18,7 +18,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 from oslo_log import log as logging
-import six
 
 from congress.datasources import datasource_driver
 
@@ -104,7 +103,8 @@ class MonascaAlarmDriver(datasource_driver.PushedDataSourceDriver):
     TRANSLATORS = [alarms_translator]
 
     def __init__(self, name='', keys='', inbox=None, datapath=None, args=None):
-        super(MonascaAlarmDriver, self).__init__(name, keys, inbox, datapath, args)
+        super(MonascaAlarmDriver, self).__init__(name, keys, inbox, datapath,
+                                                 args)
 
     @staticmethod
     def get_datasource_info():

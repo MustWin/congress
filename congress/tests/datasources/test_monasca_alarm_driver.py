@@ -27,12 +27,13 @@ class TestMonascaAlarmDriver(base.TestCase):
 
     def setUp(self):
         super(TestMonascaAlarmDriver, self).setUp()
-        self.monasca = monasca_alarm_driver.MonascaAlarmDriver('test-monasca-alarm')
+        self.monasca = monasca_alarm_driver.MonascaAlarmDriver(
+            'test-monasca-alarm')
 
     def numbered_string(self, string, number):
         return string + str(number)
 
-    def double_numbered_string(self, string, number_a, number_b):
+    def dbl_num_string(self, string, number_a, number_b):
         return string + str(number_a) + "," + str(number_b)
 
     def generate_alarm_object(self, num_metrics, num_dimensions):
@@ -40,9 +41,11 @@ class TestMonascaAlarmDriver(base.TestCase):
         for i in range(0, num_metrics):
             dimensions = {}
             for j in range(0, num_dimensions):
-                dimensions[self.double_numbered_string('test_dimension_name', i, j)] = self.double_numbered_string('test_dimension_val', i, j)
+                name = self.dbl_num_string('test_dimension_name', i, j)
+                val = self.dbl_num_string('test_dimension_val', i, j)
+                dimensions[name] = val
             metric = {
-                "name": self.numbered_string('test_metric_name',i),
+                "name": self.numbered_string('test_metric_name', i),
                 "dimensions": dimensions
             }
             metrics.append(metric)
@@ -69,7 +72,9 @@ class TestMonascaAlarmDriver(base.TestCase):
         self.monasca.update_entire_data('alarms', obj)
 
         self.assertEqual(1, len(self.monasca.state['alarms']))
-        self.assertEqual(num_metrics*num_dimensions, len(self.monasca.state['metric_dimensions']))
+
+        metdims = num_metrics * num_dimensions
+        self.assertEqual(metdims, len(self.monasca.state['metric_dimensions']))
 
         # change elements in state['alarms'] set to list and sort by id
         alarm = list(self.monasca.state['alarms'])[0]
@@ -85,12 +90,13 @@ class TestMonascaAlarmDriver(base.TestCase):
         self.assertEqual('test_message', alarm[8])
         self.assertEqual('test_hostname', alarm[9])
 
-        metric_dimensions = sorted(list(self.monasca.state['metric_dimensions']),
-                                   key=lambda x: x[1])
+        metric_dimensions = sorted(
+            list(self.monasca.state['metric_dimensions']),
+            key=lambda x: x[1])
 
         metrics = {}
         for i, row in enumerate(metric_dimensions):
-            self.assertEqual(alarm[0],row[0])
+            self.assertEqual(alarm[0], row[0])
             splitted = row[1].split('.', 1)
             if splitted[0] not in metrics:
                 metric = {
@@ -101,10 +107,15 @@ class TestMonascaAlarmDriver(base.TestCase):
 
             metrics[splitted[0]]["dimensions"][splitted[1]] = row[2]
 
-        for i, name_metric in enumerate(sorted(metrics.items(), key=lambda kv: list(kv)[0])):
+        for i, name_metric in enumerate(sorted(metrics.items(),
+                                               key=lambda kv: kv[0])):
             name, metric = name_metric
-            self.assertEqual(self.numbered_string('test_metric_name', i), metric["name"])
-            for j, dimension_name_val in enumerate(sorted(metric["dimensions"].items(), key=lambda kv: list(kv)[0])):
+            self.assertEqual(self.numbered_string('test_metric_name', i),
+                             metric["name"])
+            for j, dimension_name_val in enumerate(sorted(
+                    metric["dimensions"].items(), key=lambda kv: kv[0])):
                 dimension_name, dimension_val = dimension_name_val
-                self.assertEqual(self.double_numbered_string('test_dimension_name', i, j), dimension_name)
-                self.assertEqual(self.double_numbered_string('test_dimension_val', i, j), dimension_val)
+                expect_name = self.dbl_num_string('test_dimension_name', i, j)
+                expect_val = self.dbl_num_string('test_dimension_val', i, j)
+                self.assertEqual(expect_name, dimension_name)
+                self.assertEqual(expect_val, dimension_val)
